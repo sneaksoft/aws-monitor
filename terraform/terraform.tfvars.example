@@ -1,0 +1,32 @@
+# AWS Monitor Terraform Variables Example
+# Copy this file to terraform.tfvars and fill in your values
+
+# AWS Configuration
+aws_region   = "us-east-1"
+project_name = "aws-monitor"
+environment  = "prod"
+
+# VPC
+vpc_cidr = "10.0.0.0/16"
+
+# Database
+db_name              = "aws_monitor"
+db_username          = "aws_monitor"
+db_password          = "CHANGE_ME_SECURE_PASSWORD"
+db_instance_class    = "db.t3.small"
+db_allocated_storage = 20
+
+# Redis
+redis_node_type = "cache.t3.micro"
+
+# Cognito (leave empty to create new, or provide existing)
+cognito_user_pool_id = ""
+cognito_client_id    = ""
+create_cognito       = true
+
+# CloudFront (optional)
+enable_cloudfront = false
+certificate_arn   = ""
+
+# Admin
+admin_override_code = "CHANGE_ME_SECRET_CODE"

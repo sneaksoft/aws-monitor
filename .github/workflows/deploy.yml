@@ -1,0 +1,94 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - prod
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push backend image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/aws-monitor-${{ github.event.inputs.environment || 'staging' }}-backend:$IMAGE_TAG ./backend
+          docker push $ECR_REGISTRY/aws-monitor-${{ github.event.inputs.environment || 'staging' }}-backend:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/aws-monitor-${{ github.event.inputs.environment || 'staging' }}-backend:$IMAGE_TAG \
+                     $ECR_REGISTRY/aws-monitor-${{ github.event.inputs.environment || 'staging' }}-backend:latest
+          docker push $ECR_REGISTRY/aws-monitor-${{ github.event.inputs.environment || 'staging' }}-backend:latest
+
+      - name: Build and push frontend image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/aws-monitor-${{ github.event.inputs.environment || 'staging' }}-frontend:$IMAGE_TAG \
+                       --target production ./frontend
+          docker push $ECR_REGISTRY/aws-monitor-${{ github.event.inputs.environment || 'staging' }}-frontend:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/aws-monitor-${{ github.event.inputs.environment || 'staging' }}-frontend:$IMAGE_TAG \
+                     $ECR_REGISTRY/aws-monitor-${{ github.event.inputs.environment || 'staging' }}-frontend:latest
+          docker push $ECR_REGISTRY/aws-monitor-${{ github.event.inputs.environment || 'staging' }}-frontend:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update ECS services
+        run: |
+          aws ecs update-service \
+            --cluster aws-monitor-${{ github.event.inputs.environment || 'staging' }} \
+            --service aws-monitor-${{ github.event.inputs.environment || 'staging' }}-backend \
+            --force-new-deployment
+
+          aws ecs update-service \
+            --cluster aws-monitor-${{ github.event.inputs.environment || 'staging' }} \
+            --service aws-monitor-${{ github.event.inputs.environment || 'staging' }}-frontend \
+            --force-new-deployment
+
+      - name: Wait for deployment
+        run: |
+          aws ecs wait services-stable \
+            --cluster aws-monitor-${{ github.event.inputs.environment || 'staging' }} \
+            --services aws-monitor-${{ github.event.inputs.environment || 'staging' }}-backend \
+                       aws-monitor-${{ github.event.inputs.environment || 'staging' }}-frontend
