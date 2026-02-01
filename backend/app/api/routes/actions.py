@@ -35,10 +35,27 @@ async def start_ec2_instances(
     ec2 = EC2Service()
     audit = AuditService()
 
-    result = await ec2.start_instances(
-        instance_ids=request.resource_ids,
-        dry_run=request.dry_run,
-    )
+    try:
+        result = await ec2.start_instances(
+            instance_ids=request.resource_ids,
+            dry_run=request.dry_run,
+        )
+        action_status = "dry_run" if request.dry_run else "success"
+        response_data = result
+    except Exception as e:
+        action_status = "failed"
+        response_data = {"error": str(e), "error_type": type(e).__name__}
+        await audit.log_action(
+            user=user,
+            action="ec2:start",
+            resource_type="ec2",
+            resource_ids=request.resource_ids,
+            request=http_request,
+            status=action_status,
+            request_data=request.model_dump(),
+            response_data=response_data,
+        )
+        raise
 
     await audit.log_action(
         user=user,
@@ -46,16 +63,16 @@ async def start_ec2_instances(
         resource_type="ec2",
         resource_ids=request.resource_ids,
         request=http_request,
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         request_data=request.model_dump(),
-        response_data=result,
+        response_data=response_data,
     )
 
     if not request.dry_run:
         await cache.invalidate_resources("ec2")
 
     return ActionResponse(
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         action="start",
         resource_ids=request.resource_ids,
         dry_run=request.dry_run,
@@ -83,10 +100,27 @@ async def stop_ec2_instances(
             override_code=request.override_code,
         )
 
-    result = await ec2.stop_instances(
-        instance_ids=request.resource_ids,
-        dry_run=request.dry_run,
-    )
+    try:
+        result = await ec2.stop_instances(
+            instance_ids=request.resource_ids,
+            dry_run=request.dry_run,
+        )
+        action_status = "dry_run" if request.dry_run else "success"
+        response_data = result
+    except Exception as e:
+        action_status = "failed"
+        response_data = {"error": str(e), "error_type": type(e).__name__}
+        await audit.log_action(
+            user=user,
+            action="ec2:stop",
+            resource_type="ec2",
+            resource_ids=request.resource_ids,
+            request=http_request,
+            status=action_status,
+            request_data=request.model_dump(),
+            response_data=response_data,
+        )
+        raise
 
     await audit.log_action(
         user=user,
@@ -94,16 +128,16 @@ async def stop_ec2_instances(
         resource_type="ec2",
         resource_ids=request.resource_ids,
         request=http_request,
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         request_data=request.model_dump(),
-        response_data=result,
+        response_data=response_data,
     )
 
     if not request.dry_run:
         await cache.invalidate_resources("ec2")
 
     return ActionResponse(
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         action="stop",
         resource_ids=request.resource_ids,
         dry_run=request.dry_run,
@@ -131,10 +165,27 @@ async def terminate_ec2_instances(
             override_code=request.override_code,
         )
 
-    result = await ec2.terminate_instances(
-        instance_ids=request.resource_ids,
-        dry_run=request.dry_run,
-    )
+    try:
+        result = await ec2.terminate_instances(
+            instance_ids=request.resource_ids,
+            dry_run=request.dry_run,
+        )
+        action_status = "dry_run" if request.dry_run else "success"
+        response_data = result
+    except Exception as e:
+        action_status = "failed"
+        response_data = {"error": str(e), "error_type": type(e).__name__}
+        await audit.log_action(
+            user=user,
+            action="ec2:terminate",
+            resource_type="ec2",
+            resource_ids=request.resource_ids,
+            request=http_request,
+            status=action_status,
+            request_data=request.model_dump(),
+            response_data=response_data,
+        )
+        raise
 
     await audit.log_action(
         user=user,
@@ -142,16 +193,16 @@ async def terminate_ec2_instances(
         resource_type="ec2",
         resource_ids=request.resource_ids,
         request=http_request,
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         request_data=request.model_dump(),
-        response_data=result,
+        response_data=response_data,
     )
 
     if not request.dry_run:
         await cache.invalidate_resources("ec2")
 
     return ActionResponse(
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         action="terminate",
         resource_ids=request.resource_ids,
         dry_run=request.dry_run,
@@ -171,10 +222,27 @@ async def start_rds_instance(
     rds = RDSService()
     audit = AuditService()
 
-    result = await rds.start_instance(
-        db_instance_identifier=request.db_instance_identifier,
-        dry_run=request.dry_run,
-    )
+    try:
+        result = await rds.start_instance(
+            db_instance_identifier=request.db_instance_identifier,
+            dry_run=request.dry_run,
+        )
+        action_status = "dry_run" if request.dry_run else "success"
+        response_data = result
+    except Exception as e:
+        action_status = "failed"
+        response_data = {"error": str(e), "error_type": type(e).__name__}
+        await audit.log_action(
+            user=user,
+            action="rds:start",
+            resource_type="rds",
+            resource_ids=[request.db_instance_identifier],
+            request=http_request,
+            status=action_status,
+            request_data=request.model_dump(),
+            response_data=response_data,
+        )
+        raise
 
     await audit.log_action(
         user=user,
@@ -182,16 +250,16 @@ async def start_rds_instance(
         resource_type="rds",
         resource_ids=[request.db_instance_identifier],
         request=http_request,
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         request_data=request.model_dump(),
-        response_data=result,
+        response_data=response_data,
     )
 
     if not request.dry_run:
         await cache.invalidate_resources("rds")
 
     return ActionResponse(
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         action="start",
         resource_ids=[request.db_instance_identifier],
         dry_run=request.dry_run,
@@ -217,10 +285,27 @@ async def stop_rds_instance(
         override_code=request.override_code,
     )
 
-    result = await rds.stop_instance(
-        db_instance_identifier=request.db_instance_identifier,
-        dry_run=request.dry_run,
-    )
+    try:
+        result = await rds.stop_instance(
+            db_instance_identifier=request.db_instance_identifier,
+            dry_run=request.dry_run,
+        )
+        action_status = "dry_run" if request.dry_run else "success"
+        response_data = result
+    except Exception as e:
+        action_status = "failed"
+        response_data = {"error": str(e), "error_type": type(e).__name__}
+        await audit.log_action(
+            user=user,
+            action="rds:stop",
+            resource_type="rds",
+            resource_ids=[request.db_instance_identifier],
+            request=http_request,
+            status=action_status,
+            request_data=request.model_dump(),
+            response_data=response_data,
+        )
+        raise
 
     await audit.log_action(
         user=user,
@@ -228,16 +313,16 @@ async def stop_rds_instance(
         resource_type="rds",
         resource_ids=[request.db_instance_identifier],
         request=http_request,
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         request_data=request.model_dump(),
-        response_data=result,
+        response_data=response_data,
     )
 
     if not request.dry_run:
         await cache.invalidate_resources("rds")
 
     return ActionResponse(
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         action="stop",
         resource_ids=[request.db_instance_identifier],
         dry_run=request.dry_run,
@@ -266,11 +351,30 @@ async def delete_rds_instance(
         override_code=override_code,
     )
 
-    result = await rds.delete_instance(
-        db_instance_identifier=db_instance_identifier,
-        skip_final_snapshot=skip_final_snapshot,
-        dry_run=dry_run,
-    )
+    request_data = {"skip_final_snapshot": skip_final_snapshot}
+
+    try:
+        result = await rds.delete_instance(
+            db_instance_identifier=db_instance_identifier,
+            skip_final_snapshot=skip_final_snapshot,
+            dry_run=dry_run,
+        )
+        action_status = "dry_run" if dry_run else "success"
+        response_data = result
+    except Exception as e:
+        action_status = "failed"
+        response_data = {"error": str(e), "error_type": type(e).__name__}
+        await audit.log_action(
+            user=user,
+            action="rds:delete",
+            resource_type="rds",
+            resource_ids=[db_instance_identifier],
+            request=http_request,
+            status=action_status,
+            request_data=request_data,
+            response_data=response_data,
+        )
+        raise
 
     await audit.log_action(
         user=user,
@@ -278,16 +382,16 @@ async def delete_rds_instance(
         resource_type="rds",
         resource_ids=[db_instance_identifier],
         request=http_request,
-        status="dry_run" if dry_run else "success",
-        request_data={"skip_final_snapshot": skip_final_snapshot},
-        response_data=result,
+        status=action_status,
+        request_data=request_data,
+        response_data=response_data,
     )
 
     if not dry_run:
         await cache.invalidate_resources("rds")
 
     return ActionResponse(
-        status="dry_run" if dry_run else "success",
+        status=action_status,
         action="delete",
         resource_ids=[db_instance_identifier],
         dry_run=dry_run,
@@ -314,31 +418,50 @@ async def scale_ecs_service(
         override_code=request.override_code,
     )
 
-    result = await ecs.scale_service(
-        cluster=request.cluster,
-        service=request.service,
-        desired_count=request.desired_count,
-        dry_run=request.dry_run,
-    )
+    resource_id = f"{request.cluster}/{request.service}"
+
+    try:
+        result = await ecs.scale_service(
+            cluster=request.cluster,
+            service=request.service,
+            desired_count=request.desired_count,
+            dry_run=request.dry_run,
+        )
+        action_status = "dry_run" if request.dry_run else "success"
+        response_data = result
+    except Exception as e:
+        action_status = "failed"
+        response_data = {"error": str(e), "error_type": type(e).__name__}
+        await audit.log_action(
+            user=user,
+            action="ecs:scale",
+            resource_type="ecs",
+            resource_ids=[resource_id],
+            request=http_request,
+            status=action_status,
+            request_data=request.model_dump(),
+            response_data=response_data,
+        )
+        raise
 
     await audit.log_action(
         user=user,
         action="ecs:scale",
         resource_type="ecs",
-        resource_ids=[f"{request.cluster}/{request.service}"],
+        resource_ids=[resource_id],
         request=http_request,
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         request_data=request.model_dump(),
-        response_data=result,
+        response_data=response_data,
     )
 
     if not request.dry_run:
         await cache.invalidate_resources("ecs")
 
     return ActionResponse(
-        status="dry_run" if request.dry_run else "success",
+        status=action_status,
         action="scale",
-        resource_ids=[f"{request.cluster}/{request.service}"],
+        resource_ids=[resource_id],
         dry_run=request.dry_run,
         details=result,
     )
@@ -366,11 +489,30 @@ async def delete_s3_bucket(
         override_code=override_code,
     )
 
-    result = await s3.delete_bucket(
-        bucket_name=bucket_name,
-        force_delete=force_delete,
-        dry_run=dry_run,
-    )
+    request_data = {"force_delete": force_delete}
+
+    try:
+        result = await s3.delete_bucket(
+            bucket_name=bucket_name,
+            force_delete=force_delete,
+            dry_run=dry_run,
+        )
+        action_status = "dry_run" if dry_run else "success"
+        response_data = result
+    except Exception as e:
+        action_status = "failed"
+        response_data = {"error": str(e), "error_type": type(e).__name__}
+        await audit.log_action(
+            user=user,
+            action="s3:delete",
+            resource_type="s3",
+            resource_ids=[bucket_name],
+            request=http_request,
+            status=action_status,
+            request_data=request_data,
+            response_data=response_data,
+        )
+        raise
 
     await audit.log_action(
         user=user,
@@ -378,16 +520,16 @@ async def delete_s3_bucket(
         resource_type="s3",
         resource_ids=[bucket_name],
         request=http_request,
-        status="dry_run" if dry_run else "success",
-        request_data={"force_delete": force_delete},
-        response_data=result,
+        status=action_status,
+        request_data=request_data,
+        response_data=response_data,
     )
 
     if not dry_run:
         await cache.invalidate_resources("s3")
 
     return ActionResponse(
-        status="dry_run" if dry_run else "success",
+        status=action_status,
         action="delete",
         resource_ids=[bucket_name],
         dry_run=dry_run,
@@ -416,10 +558,26 @@ async def delete_ebs_volume(
         override_code=override_code,
     )
 
-    result = await ec2.delete_volume(
-        volume_id=volume_id,
-        dry_run=dry_run,
-    )
+    try:
+        result = await ec2.delete_volume(
+            volume_id=volume_id,
+            dry_run=dry_run,
+        )
+        action_status = "dry_run" if dry_run else "success"
+        response_data = result
+    except Exception as e:
+        action_status = "failed"
+        response_data = {"error": str(e), "error_type": type(e).__name__}
+        await audit.log_action(
+            user=user,
+            action="ebs:delete",
+            resource_type="ebs",
+            resource_ids=[volume_id],
+            request=http_request,
+            status=action_status,
+            response_data=response_data,
+        )
+        raise
 
     await audit.log_action(
         user=user,
@@ -427,15 +585,15 @@ async def delete_ebs_volume(
         resource_type="ebs",
         resource_ids=[volume_id],
         request=http_request,
-        status="dry_run" if dry_run else "success",
-        response_data=result,
+        status=action_status,
+        response_data=response_data,
     )
 
     if not dry_run:
         await cache.invalidate_resources("ebs")
 
     return ActionResponse(
-        status="dry_run" if dry_run else "success",
+        status=action_status,
         action="delete",
         resource_ids=[volume_id],
         dry_run=dry_run,
