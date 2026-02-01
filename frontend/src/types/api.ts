@@ -28,6 +28,7 @@ export interface AuditLog {
   region: string | null;
   status: string;
   request_data: Record<string, unknown> | null;
+  response_data: Record<string, unknown> | null;
   created_at: string;
 }
 
