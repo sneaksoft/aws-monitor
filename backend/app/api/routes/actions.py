@@ -122,6 +122,11 @@ async def stop_ec2_instances(
         )
         raise
 
+    # Build request_data with override flag
+    audit_request_data = request.model_dump()
+    if request.override_code:
+        audit_request_data["override_used"] = True
+
     await audit.log_action(
         user=user,
         action="ec2:stop",
@@ -129,7 +134,7 @@ async def stop_ec2_instances(
         resource_ids=request.resource_ids,
         request=http_request,
         status=action_status,
-        request_data=request.model_dump(),
+        request_data=audit_request_data,
         response_data=response_data,
     )
 
@@ -187,6 +192,11 @@ async def terminate_ec2_instances(
         )
         raise
 
+    # Build request_data with override flag
+    audit_request_data = request.model_dump()
+    if request.override_code:
+        audit_request_data["override_used"] = True
+
     await audit.log_action(
         user=user,
         action="ec2:terminate",
@@ -194,7 +204,7 @@ async def terminate_ec2_instances(
         resource_ids=request.resource_ids,
         request=http_request,
         status=action_status,
-        request_data=request.model_dump(),
+        request_data=audit_request_data,
         response_data=response_data,
     )
 
@@ -307,6 +317,11 @@ async def stop_rds_instance(
         )
         raise
 
+    # Build request_data with override flag
+    audit_request_data = request.model_dump()
+    if request.override_code:
+        audit_request_data["override_used"] = True
+
     await audit.log_action(
         user=user,
         action="rds:stop",
@@ -314,7 +329,7 @@ async def stop_rds_instance(
         resource_ids=[request.db_instance_identifier],
         request=http_request,
         status=action_status,
-        request_data=request.model_dump(),
+        request_data=audit_request_data,
         response_data=response_data,
     )
 
@@ -376,6 +391,11 @@ async def delete_rds_instance(
         )
         raise
 
+    # Build request_data with override flag
+    audit_request_data = {"skip_final_snapshot": skip_final_snapshot}
+    if override_code:
+        audit_request_data["override_used"] = True
+
     await audit.log_action(
         user=user,
         action="rds:delete",
@@ -383,7 +403,7 @@ async def delete_rds_instance(
         resource_ids=[db_instance_identifier],
         request=http_request,
         status=action_status,
-        request_data=request_data,
+        request_data=audit_request_data,
         response_data=response_data,
     )
 
@@ -444,6 +464,11 @@ async def scale_ecs_service(
         )
         raise
 
+    # Build request_data with override flag
+    audit_request_data = request.model_dump()
+    if request.override_code:
+        audit_request_data["override_used"] = True
+
     await audit.log_action(
         user=user,
         action="ecs:scale",
@@ -451,7 +476,7 @@ async def scale_ecs_service(
         resource_ids=[resource_id],
         request=http_request,
         status=action_status,
-        request_data=request.model_dump(),
+        request_data=audit_request_data,
         response_data=response_data,
     )
 
@@ -514,6 +539,11 @@ async def delete_s3_bucket(
         )
         raise
 
+    # Build request_data with override flag
+    audit_request_data = {"force_delete": force_delete}
+    if override_code:
+        audit_request_data["override_used"] = True
+
     await audit.log_action(
         user=user,
         action="s3:delete",
@@ -521,7 +551,7 @@ async def delete_s3_bucket(
         resource_ids=[bucket_name],
         request=http_request,
         status=action_status,
-        request_data=request_data,
+        request_data=audit_request_data,
         response_data=response_data,
     )
 
@@ -579,6 +609,11 @@ async def delete_ebs_volume(
         )
         raise
 
+    # Build request_data with override flag
+    audit_request_data = {}
+    if override_code:
+        audit_request_data["override_used"] = True
+
     await audit.log_action(
         user=user,
         action="ebs:delete",
@@ -586,6 +621,7 @@ async def delete_ebs_volume(
         resource_ids=[volume_id],
         request=http_request,
         status=action_status,
+        request_data=audit_request_data if audit_request_data else None,
         response_data=response_data,
     )
 
