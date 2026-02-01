@@ -157,7 +157,11 @@ async def test_rds_stop_failed_logs_audit(client: AsyncClient):
 
                 response = await client.post(
                     "/api/actions/rds/stop",
-                    json={"db_instance_identifier": "invalid-db", "dry_run": False},
+                    json={
+                        "resource_ids": ["invalid-db"],
+                        "db_instance_identifier": "invalid-db",
+                        "dry_run": False,
+                    },
                 )
 
                 # Request should fail

@@ -55,7 +55,7 @@ async def start_ec2_instances(
             request_data=request.model_dump(),
             response_data=response_data,
         )
-        raise
+        raise HTTPException(status_code=500, detail=str(e))
 
     await audit.log_action(
         user=user,
@@ -120,7 +120,7 @@ async def stop_ec2_instances(
             request_data=request.model_dump(),
             response_data=response_data,
         )
-        raise
+        raise HTTPException(status_code=500, detail=str(e))
 
     # Build request_data with override flag
     audit_request_data = request.model_dump()
@@ -190,7 +190,7 @@ async def terminate_ec2_instances(
             request_data=request.model_dump(),
             response_data=response_data,
         )
-        raise
+        raise HTTPException(status_code=500, detail=str(e))
 
     # Build request_data with override flag
     audit_request_data = request.model_dump()
@@ -252,7 +252,7 @@ async def start_rds_instance(
             request_data=request.model_dump(),
             response_data=response_data,
         )
-        raise
+        raise HTTPException(status_code=500, detail=str(e))
 
     await audit.log_action(
         user=user,
@@ -315,7 +315,7 @@ async def stop_rds_instance(
             request_data=request.model_dump(),
             response_data=response_data,
         )
-        raise
+        raise HTTPException(status_code=500, detail=str(e))
 
     # Build request_data with override flag
     audit_request_data = request.model_dump()
@@ -389,7 +389,7 @@ async def delete_rds_instance(
             request_data=request_data,
             response_data=response_data,
         )
-        raise
+        raise HTTPException(status_code=500, detail=str(e))
 
     # Build request_data with override flag
     audit_request_data = {"skip_final_snapshot": skip_final_snapshot}
@@ -462,7 +462,7 @@ async def scale_ecs_service(
             request_data=request.model_dump(),
             response_data=response_data,
         )
-        raise
+        raise HTTPException(status_code=500, detail=str(e))
 
     # Build request_data with override flag
     audit_request_data = request.model_dump()
@@ -537,7 +537,7 @@ async def delete_s3_bucket(
             request_data=request_data,
             response_data=response_data,
         )
-        raise
+        raise HTTPException(status_code=500, detail=str(e))
 
     # Build request_data with override flag
     audit_request_data = {"force_delete": force_delete}
@@ -607,7 +607,7 @@ async def delete_ebs_volume(
             status=action_status,
             response_data=response_data,
         )
-        raise
+        raise HTTPException(status_code=500, detail=str(e))
 
     # Build request_data with override flag
     audit_request_data = {}

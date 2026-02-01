@@ -1,5 +1,6 @@
 """Tests for configuration module."""
 
+import os
 import pytest
 from app.config import Settings
 
@@ -15,15 +16,17 @@ def test_settings_defaults():
     assert "production" in settings.protected_tags
 
 
-def test_settings_protected_tags_parsing():
+def test_settings_protected_tags_parsing(monkeypatch):
     """Test parsing of protected tags from string."""
-    # When passed as comma-separated string
-    settings = Settings(protected_tags="prod,staging,critical")
+    # When passed as environment variable
+    monkeypatch.setenv("PROTECTED_TAGS", "prod,staging,critical")
+    settings = Settings()
     assert settings.protected_tags == ["prod", "staging", "critical"]
 
 
-def test_settings_cors_origins_parsing():
+def test_settings_cors_origins_parsing(monkeypatch):
     """Test parsing of CORS origins from string."""
-    settings = Settings(cors_origins="http://localhost:3000,http://localhost:5173")
+    monkeypatch.setenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
+    settings = Settings()
     assert "http://localhost:3000" in settings.cors_origins
     assert "http://localhost:5173" in settings.cors_origins
