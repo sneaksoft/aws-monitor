@@ -50,6 +50,25 @@ export default function Audit() {
           </div>
           <select
             className="border rounded-md px-3 py-2"
+            value={filters.resource_type || ''}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                resource_type: e.target.value || undefined,
+              }))
+            }
+          >
+            <option value="">All Resources</option>
+            <option value="ec2">EC2</option>
+            <option value="rds">RDS</option>
+            <option value="ecs">ECS</option>
+            <option value="s3">S3</option>
+            <option value="ebs">EBS</option>
+            <option value="auth">Auth</option>
+            <option value="aws_account">AWS Account</option>
+          </select>
+          <select
+            className="border rounded-md px-3 py-2"
             value={filters.action || ''}
             onChange={(e) =>
               setFilters((prev) => ({
@@ -67,6 +86,14 @@ export default function Audit() {
             <option value="rds:delete">RDS Delete</option>
             <option value="ecs:scale">ECS Scale</option>
             <option value="s3:delete">S3 Delete</option>
+            <option value="ebs:delete">EBS Delete</option>
+            <option value="auth:login">Auth Login</option>
+            <option value="auth:logout">Auth Logout</option>
+            <option value="auth:refresh">Auth Refresh</option>
+            <option value="account:create">Account Create</option>
+            <option value="account:update">Account Update</option>
+            <option value="account:delete">Account Delete</option>
+            <option value="account:verify">Account Verify</option>
           </select>
           <select
             className="border rounded-md px-3 py-2"
@@ -187,16 +214,30 @@ export default function Audit() {
                           </button>
                         </td>
                       </tr>
-                      {expandedLog === log.id && log.request_data && (
+                      {expandedLog === log.id && (log.request_data || log.response_data) && (
                         <tr>
                           <td colSpan={7} className="bg-gray-50 px-6 py-4">
-                            <div>
-                              <p className="text-sm font-medium text-gray-700 mb-2">
-                                Request Data:
-                              </p>
-                              <pre className="text-xs bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                                {JSON.stringify(log.request_data, null, 2)}
-                              </pre>
+                            <div className="space-y-4">
+                              {log.request_data && (
+                                <div>
+                                  <p className="text-sm font-medium text-gray-700 mb-2">
+                                    Request Data:
+                                  </p>
+                                  <pre className="text-xs bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                                    {JSON.stringify(log.request_data, null, 2)}
+                                  </pre>
+                                </div>
+                              )}
+                              {log.response_data && (
+                                <div>
+                                  <p className="text-sm font-medium text-gray-700 mb-2">
+                                    Response Data:
+                                  </p>
+                                  <pre className="text-xs bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                                    {JSON.stringify(log.response_data, null, 2)}
+                                  </pre>
+                                </div>
+                              )}
                             </div>
                           </td>
                         </tr>
