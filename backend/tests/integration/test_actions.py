@@ -109,6 +109,7 @@ async def test_ecs_scale_action(client: AsyncClient):
                 assert data["action"] == "scale"
 
 
+# Tests for failed operation audit logging (Issue #1)
 @pytest.mark.asyncio
 async def test_ec2_start_failed_logs_audit(client: AsyncClient):
     """Test that failed EC2 operations are still logged to audit."""
@@ -168,3 +169,101 @@ async def test_rds_stop_failed_logs_audit(client: AsyncClient):
                 assert call_kwargs["status"] == "failed"
                 assert call_kwargs["action"] == "rds:stop"
                 assert "error" in call_kwargs["response_data"]
+
+
+# Tests for override code capture in audit logs (Issue #4)
+@pytest.mark.asyncio
+async def test_ec2_stop_with_override_logs_override_used(client: AsyncClient):
+    """Test that using override code is captured in audit log."""
+    with patch("app.api.routes.actions.SafetyService") as mock_safety_class:
+        mock_safety = AsyncMock()
+        mock_safety_class.return_value = mock_safety
+
+        with patch("app.api.routes.actions.EC2Service") as mock_ec2_class:
+            mock_ec2 = AsyncMock()
+            mock_ec2.stop_instances.return_value = {"stopped": ["i-prod123"]}
+            mock_ec2_class.return_value = mock_ec2
+
+            with patch("app.api.routes.actions.AuditService") as mock_audit_class:
+                mock_audit = AsyncMock()
+                mock_audit_class.return_value = mock_audit
+
+                response = await client.post(
+                    "/api/actions/ec2/stop",
+                    json={
+                        "resource_ids": ["i-prod123"],
+                        "dry_run": False,
+                        "override_code": "ADMIN-OVERRIDE-123",
+                    },
+                )
+
+                assert response.status_code == 200
+
+                # Verify audit log includes override_used flag
+                mock_audit.log_action.assert_called_once()
+                call_kwargs = mock_audit.log_action.call_args.kwargs
+                assert call_kwargs["request_data"]["override_used"] is True
+
+
+@pytest.mark.asyncio
+async def test_ec2_stop_without_override_no_flag(client: AsyncClient):
+    """Test that without override code, override_used flag is not set."""
+    with patch("app.api.routes.actions.SafetyService") as mock_safety_class:
+        mock_safety = AsyncMock()
+        mock_safety_class.return_value = mock_safety
+
+        with patch("app.api.routes.actions.EC2Service") as mock_ec2_class:
+            mock_ec2 = AsyncMock()
+            mock_ec2.stop_instances.return_value = {"stopped": ["i-123"]}
+            mock_ec2_class.return_value = mock_ec2
+
+            with patch("app.api.routes.actions.AuditService") as mock_audit_class:
+                mock_audit = AsyncMock()
+                mock_audit_class.return_value = mock_audit
+
+                response = await client.post(
+                    "/api/actions/ec2/stop",
+                    json={
+                        "resource_ids": ["i-123"],
+                        "dry_run": False,
+                    },
+                )
+
+                assert response.status_code == 200
+
+                # Verify audit log does not include override_used flag
+                mock_audit.log_action.assert_called_once()
+                call_kwargs = mock_audit.log_action.call_args.kwargs
+                assert "override_used" not in call_kwargs["request_data"]
+
+
+@pytest.mark.asyncio
+async def test_s3_delete_with_override_logs_override_used(client: AsyncClient):
+    """Test that S3 delete with override code is captured in audit log."""
+    with patch("app.api.routes.actions.SafetyService") as mock_safety_class:
+        mock_safety = AsyncMock()
+        mock_safety_class.return_value = mock_safety
+
+        with patch("app.api.routes.actions.S3Service") as mock_s3_class:
+            mock_s3 = AsyncMock()
+            mock_s3.delete_bucket.return_value = {"deleted": "prod-bucket"}
+            mock_s3_class.return_value = mock_s3
+
+            with patch("app.api.routes.actions.AuditService") as mock_audit_class:
+                mock_audit = AsyncMock()
+                mock_audit_class.return_value = mock_audit
+
+                response = await client.delete(
+                    "/api/actions/s3/prod-bucket",
+                    params={
+                        "dry_run": "false",
+                        "override_code": "ADMIN-OVERRIDE-456",
+                    },
+                )
+
+                assert response.status_code == 200
+
+                # Verify audit log includes override_used flag
+                mock_audit.log_action.assert_called_once()
+                call_kwargs = mock_audit.log_action.call_args.kwargs
+                assert call_kwargs["request_data"]["override_used"] is True
