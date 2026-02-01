@@ -183,6 +183,7 @@ class AuditLogResponse(BaseModel):
     region: Optional[str] = None
     status: str
     request_data: Optional[dict] = None
+    response_data: Optional[dict] = None
     created_at: datetime
 
     class Config:

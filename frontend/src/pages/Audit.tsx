@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, ChevronLeft, ChevronRight, Search, Filter } from 'lucide-react';
+import { FileText, ChevronLeft, ChevronRight, Search, Download } from 'lucide-react';
 import { auditApi, type AuditFilters } from '@/services/audit';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { format } from 'date-fns';
@@ -16,19 +16,49 @@ export default function Audit() {
   const [filters, setFilters] = useState<AuditFilters>({});
   const [page, setPage] = useState(1);
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['audit', filters, page],
     queryFn: () => auditApi.list(filters, page, 50),
   });
 
+  const handleExport = async (format: 'csv' | 'json') => {
+    setIsExporting(true);
+    try {
+      await auditApi.export(filters, format);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 mt-16">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
-        <p className="text-gray-600">
-          Track all actions performed on AWS resources
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
+          <p className="text-gray-600">
+            Track all actions performed on AWS resources
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleExport('csv')}
+            disabled={isExporting}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {isExporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+          <button
+            onClick={() => handleExport('json')}
+            disabled={isExporting}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {isExporting ? 'Exporting...' : 'Export JSON'}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
