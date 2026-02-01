@@ -17,7 +17,7 @@ class AuditService:
 
     async def log_action(
         self,
-        user: User,
+        user: Optional[User],
         action: str,
         resource_type: str,
         resource_ids: list[str],
@@ -36,7 +36,7 @@ class AuditService:
         async with async_session_maker() as session:
             for resource_id in resource_ids:
                 log_entry = AuditLog(
-                    user_id=user.id,
+                    user_id=user.id if user else None,
                     action=action,
                     resource_type=resource_type,
                     resource_id=resource_id,
