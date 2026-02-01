@@ -30,4 +30,36 @@ export const auditApi = {
     const response = await api.get<AuditLogListResponse>(`/audit?${params}`);
     return response.data;
   },
+
+  export: async (
+    filters: AuditFilters = {},
+    format: 'csv' | 'json' = 'csv'
+  ): Promise<void> => {
+    const params = new URLSearchParams();
+
+    if (filters.action) params.append('action', filters.action);
+    if (filters.resource_type) params.append('resource_type', filters.resource_type);
+    if (filters.user_email) params.append('user_email', filters.user_email);
+    if (filters.start_date) params.append('start_date', filters.start_date);
+    if (filters.end_date) params.append('end_date', filters.end_date);
+    if (filters.status) params.append('status', filters.status);
+    params.append('format', format);
+
+    const response = await api.get(`/audit/export?${params}`, {
+      responseType: 'blob',
+    });
+
+    // Create download link
+    const blob = new Blob([response.data], {
+      type: format === 'csv' ? 'text/csv' : 'application/json',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `audit_logs.${format}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
 };
